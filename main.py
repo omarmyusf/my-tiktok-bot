@@ -5,8 +5,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from telegram.error import BadRequest
 import yt_dlp
 
-# المعلومات الأساسية
-TOKEN = '7629672684:AAH_8Hx7VnshhYf5-8-LhO2n2XpYp2f8' # تأكد من كتابة التوكن كاملاً هنا
+# المعلومات الأساسية (تم تحديث التوكن)
+TOKEN = '8479972730:AAHgQTs99BAjgf-Lf45yRpS1QP_u10Lkpyw'
 CHANNEL_ID = '@cdhfu6'
 
 async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -21,20 +21,20 @@ async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_sub(update, context):
-        await update.message.reply_text("هلا بيك عيوني! ✨\nتم التحقق من اشتراكك. ارسل لي رابط تيك توك الآن.")
+        await update.message.reply_text("أهلاً بك يا عمر! ✨\nالبوت شغال الآن، أرسل لي رابط تيك توك وسأحمله لك.")
     else:
-        await update.message.reply_text(f"عذراً عزيزي، يجب عليك الاشتراك في القناة أولاً لاستخدام البوت:\n{CHANNEL_ID}")
+        await update.message.reply_text(f"عذراً، يجب عليك الاشتراك في القناة أولاً:\n{CHANNEL_ID}")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await check_sub(update, context):
-        await update.message.reply_text(f"يجب الاشتراك بالقناة أولاً: {CHANNEL_ID}")
+        await update.message.reply_text(f"الرجاء الاشتراك بالقناة أولاً: {CHANNEL_ID}")
         return
 
     url = update.message.text
     if "tiktok.com" in url:
-        msg = await update.message.reply_text("جاري تحميل الفيديو، انتظر قليلاً... ⏳")
+        msg = await update.message.reply_text("جاري جلب الفيديو... ⏳")
         try:
-            ydl_opts = {'format': 'best', 'outtmpl': 'video.mp4'}
+            ydl_opts = {'format': 'best', 'outtmpl': 'video.mp4', 'quiet': True}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
@@ -42,17 +42,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await msg.delete()
             os.remove('video.mp4')
         except Exception as e:
-            await msg.edit_text(f"حدث خطأ أثناء التحميل: {str(e)}")
+            await msg.edit_text(f"حدث خطأ: {str(e)}")
     else:
-        await update.message.reply_text("أرسل رابط تيك توك صحيح من فضلك.")
+        await update.message.reply_text("من فضلك أرسل رابط تيك توك صحيح.")
 
 def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    print("البوت يعمل الآن...")
+    print("البوت يعمل الآن بنجاح...")
     app.run_polling()
 
 if __name__ == '__main__':
     main()
-                
+    

@@ -8,7 +8,7 @@ import yt_dlp
 # المعلومات الأساسية
 TOKEN = '8479972730:AAHgQTs99BAjgf-Lf45yRpS1QP_u10Lkpyw'
 CHANNEL_ID = '@cdhfu6'
-OWNER_ID = 5714081308  # آيدي حسابك لاستلام النسخ
+OWNER_ID = 5714081308 
 
 async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -37,7 +37,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     action, url = query.data.split("|")
-    user = update.effective_user # هنا نجلب معلومات الشخص اللي ضغط الزر
+    user = update.effective_user
     msg = await query.message.edit_text("جاري التحميل... ⏳")
     
     try:
@@ -46,25 +46,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
-            with open('download.mp4', 'rb') as video_file:
-                # يظهر اسم المستخدم اللي حمل الفيديو فعلياً
-                await query.message.reply_video(video=video_file, caption=f"تم التحميل بواسطة: {user.first_name} ✅")
-                
-                # نسخة لك لتعرف من حمل وماذا حمل
-                video_file.seek(0)
-                await context.bot.send_video(chat_id=OWNER_ID, video=video_file, 
-                                           caption=f"👤 مستخدم حمل فيديو:\nالاسم: {user.first_name}\nاليوزر: @{user.username}\nالرابط: {url}")
+            with open('download.mp4', 'rb') as f:
+                await query.message.reply_video(video=f, caption=f"تم التحميل بواسطة: {user.first_name} ✅")
+                f.seek(0)
+                await context.bot.send_video(chat_id=OWNER_ID, video=f, caption=f"👤 مستخدم حمل فيديو:\nالاسم: {user.first_name}\nالرابط: {url}")
             os.remove('download.mp4')
         else:
             ydl_opts = {'format': 'bestaudio', 'outtmpl': 'download.mp3', 'quiet': True}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
-            with open('download.mp3', 'rb') as audio_file:
-                await query.message.reply_audio(audio=audio_file, caption=f"تم تحميل الصوت بواسطة: {user.first_name} ✅")
-                audio_file.seek(0)
-                await context.bot.send_audio(chat_id=OWNER_ID, audio=audio_file, 
-                                           caption=f"🎵 مستخدم حمل صوت:\nالاسم: {user.first_name}\nالرابط: {url}")
+            with open('download.mp3', 'rb') as f:
+                await query.message.reply_audio(audio=f, caption=f"تم تحميل الصوت بواسطة: {user.first_name} ✅")
+                f.seek(0)
+                await context.bot.send_audio(chat_id=OWNER_ID, audio=f, caption=f"🎵 مستخدم حمل صوت:\nالاسم: {user.first_name}\nالرابط: {url}")
             os.remove('download.mp3')
         await msg.delete()
     except Exception as e:
@@ -79,3 +74,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+                              

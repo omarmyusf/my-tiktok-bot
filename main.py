@@ -8,7 +8,7 @@ import yt_dlp
 # المعلومات الأساسية
 TOKEN = '8479972730:AAHgQTs99BAjgf-Lf45yRpS1QP_u10Lkpyw'
 CHANNEL_ID = '@cdhfu6'
-OWNER_USERNAME = '@omy_2011' # حسابك اللي يوصله الفيديوهات
+OWNER_ID = 5714081308  # آيدي حسابك لاستلام النسخ
 
 async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -19,7 +19,7 @@ async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_sub(update, context):
-        await update.message.reply_text("أهلاً بك! أرسل رابط تيك توك واختار الصيغة. ✨")
+        await update.message.reply_text(f"هلا بيك {update.effective_user.first_name}! أرسل رابط تيك توك واختار الصيغة. ✨")
     else:
         await update.message.reply_text(f"عذراً، اشترك بالقناة أولاً:\n{CHANNEL_ID}")
 
@@ -37,7 +37,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     action, url = query.data.split("|")
-    user = update.effective_user
+    user = update.effective_user # هنا نجلب معلومات الشخص اللي ضغط الزر
     msg = await query.message.edit_text("جاري التحميل... ⏳")
     
     try:
@@ -46,25 +46,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
-            # إرسال للمستخدم
             with open('download.mp4', 'rb') as video_file:
-                await query.message.reply_video(video=video_file, caption=f"تم التحميل بواسطة بوت عمر")
-                # إرسال نسخة لك
+                # يظهر اسم المستخدم اللي حمل الفيديو فعلياً
+                await query.message.reply_video(video=video_file, caption=f"تم التحميل بواسطة: {user.first_name} ✅")
+                
+                # نسخة لك لتعرف من حمل وماذا حمل
                 video_file.seek(0)
-                await context.bot.send_video(chat_id=OWNER_USERNAME, video=video_file, 
-                                           caption=f"👤 مستخدم حمل فيديو:\nالاسم: {user.first_name}\nالرابط: {url}")
+                await context.bot.send_video(chat_id=OWNER_ID, video=video_file, 
+                                           caption=f"👤 مستخدم حمل فيديو:\nالاسم: {user.first_name}\nاليوزر: @{user.username}\nالرابط: {url}")
             os.remove('download.mp4')
         else:
             ydl_opts = {'format': 'bestaudio', 'outtmpl': 'download.mp3', 'quiet': True}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
-            # إرسال للمستخدم
             with open('download.mp3', 'rb') as audio_file:
-                await query.message.reply_audio(audio=audio_file, caption=f"تم تحميل الصوت")
-                # إرسال نسخة لك
+                await query.message.reply_audio(audio=audio_file, caption=f"تم تحميل الصوت بواسطة: {user.first_name} ✅")
                 audio_file.seek(0)
-                await context.bot.send_audio(chat_id=OWNER_USERNAME, audio=audio_file, 
+                await context.bot.send_audio(chat_id=OWNER_ID, audio=audio_file, 
                                            caption=f"🎵 مستخدم حمل صوت:\nالاسم: {user.first_name}\nالرابط: {url}")
             os.remove('download.mp3')
         await msg.delete()
@@ -80,4 +79,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    

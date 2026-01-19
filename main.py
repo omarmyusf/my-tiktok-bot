@@ -6,13 +6,13 @@ from telegram.error import BadRequest
 import yt_dlp
 
 # المعلومات الأساسية
-TOKEN = '7629672684:AAH_8H3XyvI8CofU4r2zI_M-fJmC9E_Rj8A'
-CHANNEL_ID = '@cdhfu6'  # معرف قناتك للاشتراك الإجباري
+TOKEN = '7629672684:AAH_8Hx7VnshhYf5-8-LhO2n2XpYp2f8' # تأكد من كتابة التوكن كاملاً هنا
+CHANNEL_ID = '@cdhfu6'
 
 async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     try:
-        member = await context.bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
+        member = await context.bot.get_chat_member(CHANNEL_ID, user_id)
         if member.status in ['member', 'administrator', 'creator']:
             return True
         return False
@@ -21,33 +21,38 @@ async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_sub(update, context):
-        await update.message.reply_text("أهلاً بك! أرسل رابط تيك توك وسأحمله لك بدون علامة مائية.")
+        await update.message.reply_text("هلا بيك عيوني! ✨\nتم التحقق من اشتراكك. ارسل لي رابط تيك توك الآن.")
     else:
-        await update.message.reply_text(f"عذراً! يجب عليك الاشتراك في قناة البوت أولاً لتتمكن من استخدامه:\n{CHANNEL_ID}")
+        await update.message.reply_text(f"عذراً عزيزي، يجب عليك الاشتراك في القناة أولاً لاستخدام البوت:\n{CHANNEL_ID}")
 
-async def download_tiktok(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await check_sub(update, context):
-        await update.message.reply_text(f"توقف! يجب أن تشترك في القناة أولاً:\n{CHANNEL_ID}")
+        await update.message.reply_text(f"يجب الاشتراك بالقناة أولاً: {CHANNEL_ID}")
         return
 
     url = update.message.text
     if "tiktok.com" in url:
-        msg = await update.message.reply_text("جاري التحميل بدون علامة مائية... ⏳")
+        msg = await update.message.reply_text("جاري تحميل الفيديو، انتظر قليلاً... ⏳")
         try:
-            ydl_opts = {'format': 'best', 'outtmpl': 'video.mp4', 'quiet': True}
+            ydl_opts = {'format': 'best', 'outtmpl': 'video.mp4'}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             
-            await update.message.reply_video(video=open('video.mp4', 'rb'), caption="تم التحميل بواسطة بوت عمر ✅")
+            await update.message.reply_video(video=open('video.mp4', 'rb'))
             await msg.delete()
             os.remove('video.mp4')
         except Exception as e:
-            await update.message.reply_text(f"حدث خطأ: {e}")
+            await msg.edit_text(f"حدث خطأ أثناء التحميل: {str(e)}")
     else:
-        await update.message.reply_text("يرجى إرسال رابط تيك توك صحيح.")
+        await update.message.reply_text("أرسل رابط تيك توك صحيح من فضلك.")
 
-if __name__ == '__main__':
+def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_tiktok))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    print("البوت يعمل الآن...")
     app.run_polling()
+
+if __name__ == '__main__':
+    main()
+                

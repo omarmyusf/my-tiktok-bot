@@ -8,6 +8,7 @@ import yt_dlp
 # المعلومات الأساسية
 TOKEN = '8479972730:AAHgQTs99BAjgf-Lf45yRpS1QP_u10Lkpyw'
 CHANNEL_ID = '@cdhfu6'
+OWNER_USERNAME = '@omy_2011' # حسابك اللي يوصله الفيديوهات
 
 async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -18,7 +19,7 @@ async def check_sub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_sub(update, context):
-        await update.message.reply_text("هلا بيك! أرسل رابط تيك توك واختار الصيغة اللي تعجبك. ✨")
+        await update.message.reply_text("أهلاً بك! أرسل رابط تيك توك واختار الصيغة. ✨")
     else:
         await update.message.reply_text(f"عذراً، اشترك بالقناة أولاً:\n{CHANNEL_ID}")
 
@@ -26,23 +27,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await check_sub(update, context):
         await update.message.reply_text(f"اشترك هنا أولاً: {CHANNEL_ID}")
         return
-
     url = update.message.text
     if "tiktok.com" in url:
-        keyboard = [
-            [InlineKeyboardButton("فيديو MP4 🎬", callback_data=f"video|{url}")],
-            [InlineKeyboardButton("موسيقى MP3 🎵", callback_data=f"audio|{url}")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text("اختار نوع التحميل:", reply_markup=reply_markup)
-    else:
-        await update.message.reply_text("أرسل رابط تيك توك صحيح.")
+        keyboard = [[InlineKeyboardButton("فيديو MP4 🎬", callback_data=f"video|{url}")],
+                    [InlineKeyboardButton("موسيقى MP3 🎵", callback_data=f"audio|{url}")]]
+        await update.message.reply_text("اختار نوع التحميل:", reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     action, url = query.data.split("|")
-    
+    user = update.effective_user
     msg = await query.message.edit_text("جاري التحميل... ⏳")
     
     try:
@@ -50,26 +45,39 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ydl_opts = {'format': 'best', 'outtmpl': 'download.mp4', 'quiet': True}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
-            await query.message.reply_video(video=open('download.mp4', 'rb'))
+            
+            # إرسال للمستخدم
+            with open('download.mp4', 'rb') as video_file:
+                await query.message.reply_video(video=video_file, caption=f"تم التحميل بواسطة بوت عمر")
+                # إرسال نسخة لك
+                video_file.seek(0)
+                await context.bot.send_video(chat_id=OWNER_USERNAME, video=video_file, 
+                                           caption=f"👤 مستخدم حمل فيديو:\nالاسم: {user.first_name}\nالرابط: {url}")
             os.remove('download.mp4')
         else:
             ydl_opts = {'format': 'bestaudio', 'outtmpl': 'download.mp3', 'quiet': True}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
-            await query.message.reply_audio(audio=open('download.mp3', 'rb'))
+            
+            # إرسال للمستخدم
+            with open('download.mp3', 'rb') as audio_file:
+                await query.message.reply_audio(audio=audio_file, caption=f"تم تحميل الصوت")
+                # إرسال نسخة لك
+                audio_file.seek(0)
+                await context.bot.send_audio(chat_id=OWNER_USERNAME, audio=audio_file, 
+                                           caption=f"🎵 مستخدم حمل صوت:\nالاسم: {user.first_name}\nالرابط: {url}")
             os.remove('download.mp3')
-        
         await msg.delete()
     except Exception as e:
-        await msg.edit_text(f"خطأ: {str(e)}")
+        await msg.edit_text(f"حدث خطأ: {str(e)}")
 
 def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(button_handler))
-    print("البوت المطور يعمل...")
     app.run_polling()
 
 if __name__ == '__main__':
     main()
+    
